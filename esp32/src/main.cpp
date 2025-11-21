@@ -13,14 +13,9 @@
 
 DHT dht(DHTPin, DHTTYPE);
 
-//time config
-const char* ntpServer = "pool.ntp.org";
-const long gmtOffset_sec = 25200;
-const int daylightOffset_sec = 0;
-
 //timer
 unsigned long lastDataSend = 0;
-const long sendInterval = 60000;
+const long sendInterval = SEND_INTERVAL;
 
 //mqtt client
 WiFiClientSecure espClientSecure;
@@ -49,7 +44,7 @@ void setup() {
   setupWifi();
 
   //time config
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
 
   struct tm timeInfor;
   while (!getLocalTime(&timeInfor)) 
@@ -105,7 +100,7 @@ void loop() {
     publishSensorData(temp, humid, optical, moisture);
   }
 
-  delay(2000);
+  delay(READ_INTERVAL);
 }
 
 void publishSensorData(float temp, float humid, int optical, float moisture) {

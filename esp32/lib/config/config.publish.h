@@ -35,8 +35,8 @@
 // Sensor Calibration Values
 #define AIR_VALUE 3500 // Giá trị khi cảm biến ở trong không khí (khô hoàn toàn)
 #define WATER_VALUE 1500 // Giá trị khi cảm biến ngâm trong nước (ướt hoàn toàn)
-#define LIGHT_DARK_VALUE 4095
-#define LIGHT_BRIGHT_VALUE 0
+#define LIGHT_DARK_VALUE 4095 // CÀNG TỐI CÀNG CAO
+#define LIGHT_BRIGHT_VALUE 0  // CÀNG SÁNG CÀNG THẤP
 
 // Time Configuration
 #define NTP_SERVER "pool.ntp.org"
@@ -45,5 +45,6 @@
 
 // Timer Configuration
 #define SEND_INTERVAL 60000  // 60 seconds
+#define READ_INTERVAL 2000
 
 #endif
