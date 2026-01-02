@@ -1,98 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { Droplets, Calendar as CalendarIcon, RefreshCw, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, RefreshCw, Droplets, Calendar as CalendarIcon } from 'lucide-react';
+
+// Components
 import Header from './components/Header';
-import SensorDataCard from './components/SensorDataCard';
-import DeviceControlPanel from './components/DeviceControlPanel';
+import SensorDataCard from './components/SensorDataCard'; // Cần update file này ở bước 6
 import Calendar from './components/Calendar';
-import PlantCard from './components/PlantCard';
-import PlantDetailModal from './components/PlantDetailModal';
-import SettingsModal from './components/SettingsModal';
 import BottomNavigation from './components/BottomNavigation';
-import ErrorAlert from './components/ErrorAlert';
+import DeviceCard from './components/DeviceCard';
+import DeviceModal from './components/DeviceModal';
+
+// Hooks
+import { useDevices } from './hooks/useDevices';
 import { useSensorData } from './hooks/useSensorData';
-import { useDeviceControl } from './hooks/useDeviceControl';
-import { usePlants } from './hooks/usePlants';
-import { 
-  getStoredThresholds, 
-  saveThresholds, 
-  getAutoRefreshSetting, 
-  saveAutoRefreshSetting 
-} from './utils/constants';
 
 function App() {
-  const [selectedPlant, setSelectedPlant] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(getAutoRefreshSetting());
-  const [thresholds, setThresholds] = useState(getStoredThresholds());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(2);
   const [activeTab, setActiveTab] = useState('home');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingDevice, setEditingDevice] = useState(null);
 
-  const { sensorData, loading: sensorLoading, refetch: refetchSensor } = useSensorData(autoRefresh);
-  const { deviceStatus, loading: deviceLoading, controlDevice, refetch: refetchDevice } = useDeviceControl();
-  const { plants, loading: plantsLoading, refetch: refetchPlants } = usePlants();
+  const { 
+    devices, 
+    loading: devicesLoading, 
+    toggleDevice, 
+    saveDeviceSettings, 
+    deleteDeviceSettings,
+    refetch: refetchDevices 
+  } = useDevices();
+
+  const { 
+    sensorData, 
+    refetch: refetchSensors 
+  } = useSensorData();
 
   const handleRefresh = () => {
-    refetchSensor();
-    refetchDevice();
-    refetchPlants();
+    refetchDevices();
+    refetchSensors();
   };
 
-  // Lưu thresholds vào localStorage (vì backend không có API này)
-  const updateThresholds = (newThresholds) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const success = saveThresholds(newThresholds);
-      if (success) {
-        setThresholds(newThresholds);
-        setShowSettings(false);
-      } else {
-        setError('Không thể lưu cài đặt. Vui lòng thử lại.');
-      }
-    } catch (err) {
-      console.error('Error updating thresholds:', err);
-      setError('Không thể lưu cài đặt. Vui lòng thử lại.');
-    } finally {
-      setLoading(false);
-    }
+  const handleSaveDevice = (formData) => {
+    saveDeviceSettings(formData.deviceId, {
+      customName: formData.customName,
+      zone: formData.zone,
+      type: formData.type
+    });
+    setModalOpen(false);
+    setEditingDevice(null);
   };
 
-  // Lưu auto refresh setting
-  const handleAutoRefreshToggle = () => {
-    const newValue = !autoRefresh;
-    setAutoRefresh(newValue);
-    saveAutoRefreshSetting(newValue);
+  const openEditModal = (device) => {
+    setEditingDevice(device);
+    setModalOpen(true);
   };
-
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    if (tab === 'settings') {
-      setShowSettings(true);
-    }
-  };
-
-  const handleControlPump = (state) => {
-    controlDevice('pump', state);
-  };
-
-  const handleControlFan = (state) => {
-    controlDevice('fan', state);
-  };
-
-  const isLoading = sensorLoading || deviceLoading || plantsLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Header 
-        onRefresh={handleRefresh}
-        onSettingsOpen={() => setShowSettings(true)}
-        loading={isLoading}
-      />
-
-      <ErrorAlert error={error} onClose={() => setError(null)} />
+      <Header onRefresh={handleRefresh} loading={devicesLoading} />
 
       {/* Garden Info Card */}
       <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm">
@@ -110,88 +72,58 @@ function App() {
         </div>
       </div>
 
+      {/* Sensor Data - Cập nhật component này để hiển thị grid 4 ô */}
       <SensorDataCard sensorData={sensorData} />
-      
-      <DeviceControlPanel 
-        deviceStatus={deviceStatus}
-        onControl={controlDevice}
-        loading={deviceLoading}
-      />
 
-      <Calendar 
-        selectedDate={selectedDate}
-        onDateSelect={setSelectedDate}
-      />
+      {/* Calendar */}
+      <Calendar />
 
-      {/* Plants Grid */}
+      {/* Device List Section */}
       <div className="px-4 py-4">
-        <h3 className="font-bold text-gray-800 mb-4">Cây Trồng Của Bạn</h3>
-        {plantsLoading && plants.length === 0 ? (
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-gray-800">Quản lý thiết bị</h3>
+          <button
+            onClick={() => {
+              setEditingDevice(null);
+              setModalOpen(true);
+            }}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors text-sm"
+          >
+            <Plus size={18} />
+            Thêm thiết bị
+          </button>
+        </div>
+
+        {devicesLoading && devices.length === 0 ? (
           <div className="text-center py-8">
             <RefreshCw className="animate-spin mx-auto text-green-600" size={32} />
-            <p className="text-gray-500 mt-2">Đang tải dữ liệu...</p>
+            <p className="text-gray-500 mt-2">Đang tải thiết bị...</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {plants.map((plant) => (
-              <PlantCard 
-                key={plant.id}
-                plant={plant}
-                onClick={() => setSelectedPlant(plant)}
+            {devices.map((device) => (
+              <DeviceCard
+                key={device.deviceId}
+                device={device}
+                onToggle={toggleDevice}
+                onEdit={openEditModal}
+                onDelete={deleteDeviceSettings}
+                loading={devicesLoading}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Bottom Stats */}
-      <div className="grid grid-cols-2 gap-3 px-4 pb-6">
-        <div className="bg-green-50 rounded-2xl p-4 text-center">
-          <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
-            <Droplets className="text-green-600" size={24} />
-          </div>
-          <h4 className="font-semibold text-gray-800">Hệ thống tưới</h4>
-          <p className="text-sm text-gray-500">
-            {deviceStatus.pump ? 'Đang hoạt động' : '8/8 sẵn sàng'}
-          </p>
-        </div>
-        <div className="bg-pink-50 rounded-2xl p-4 text-center">
-          <div className="bg-pink-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
-            <TrendingUp className="text-pink-600" size={24} />
-          </div>
-          <h4 className="font-semibold text-gray-800">Cảm biến</h4>
-          <p className="text-sm text-gray-500">Tất cả ổn định</p>
-        </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation 
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
+      <DeviceModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initialData={editingDevice}
+        onSave={handleSaveDevice}
+        isEditing={!!editingDevice}
       />
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={showSettings}
-        onClose={() => {
-          setShowSettings(false);
-          setActiveTab('home');
-        }}
-        thresholds={thresholds}
-        onSave={updateThresholds}
-        loading={loading}
-        autoRefresh={autoRefresh}
-        onAutoRefreshToggle={handleAutoRefreshToggle}
-      />
-
-      {/* Plant Detail Modal */}
-      <PlantDetailModal
-        plant={selectedPlant}
-        onClose={() => setSelectedPlant(null)}
-        onControlPump={handleControlPump}
-        onControlFan={handleControlFan}
-        loading={deviceLoading}
-      />
+      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 }
