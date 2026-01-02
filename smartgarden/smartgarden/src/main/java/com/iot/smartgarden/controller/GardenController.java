@@ -48,15 +48,20 @@ public class GardenController {
     // Gửi lệnh MQTT
 
     // API chung cho tất cả thiết bị: /api/control/pump, /api/control/fan...
-    @PostMapping("/control/{deviceId}")
-    public String controlDevice(@PathVariable String deviceId, @RequestBody Map<String, String> body) {
+    @PostMapping("/control/{deviceId}/{component}")
+    public String controlDevice(
+            @PathVariable String deviceId,
+            @PathVariable String component,
+            @RequestBody Map<String, String> body) {
+
         String state = body.get("state"); // "ON" hoặc "OFF"
 
-        String topic = "garden/command/" + deviceId;
-        String jsonPayload = String.format("{\"state\": \"%s\"}", state);
+        //  TOPIC_CMD_WILDCARD trong ESP32: garden/command/esp32-01/#
+        String topic = "garden/command/" + deviceId + "/" + component;
 
-        mqttGateway.sendToMqtt(jsonPayload, topic);
+        // Gửi payload thô "ON" hoặc "OFF" để ESP32 strstr()
+        mqttGateway.sendToMqtt(state, topic);
 
-        return "Đã gửi lệnh " + state + " tới " + deviceId;
+        return "Sent " + state + " to " + component + " on device " + deviceId;
     }
 }

@@ -19,6 +19,8 @@ import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.handler.annotation.Header;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
+import javax.net.ssl.SSLSocketFactory;
+
 @Configuration
 public class MqttConfig {
 
@@ -29,14 +31,23 @@ public class MqttConfig {
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
-
         MqttConnectOptions options = new MqttConnectOptions();
 
-        options.setServerURIs(new String[]{"tcp://127.0.0.1:1883"});
+        // Sử dụng ssl:// và thông tin Cluster URL chính xác của bạn
+        options.setServerURIs(new String[]{"ssl://5bef7f52fc5048cd80d158e2189eb0e8.s1.eu.hivemq.cloud:8883"});
+
+        // Khớp với Credentials trong ảnh bạn đã gửi
+        options.setUserName("backend-java");
+        options.setPassword("Backend123".toCharArray());
+
+        // Quan trọng: Phải có SocketFactory để xác thực SSL
+        options.setSocketFactory(SSLSocketFactory.getDefault());
+
         options.setCleanSession(true);
+        options.setAutomaticReconnect(true);
+        options.setKeepAliveInterval(60);
 
         factory.setConnectionOptions(options);
-
         return factory;
     }
 
@@ -50,9 +61,15 @@ public class MqttConfig {
     // Adapter lắng nghe topic "garden/data" và "garden/state"
     @Bean
     public MessageProducer inbound() {
+        // ID duy nhất kèm timestamp để tránh xung đột kết nối
+        String clientId = "backend-listener-" + System.currentTimeMillis();
+
         MqttPahoMessageDrivenChannelAdapter adapter =
-                new MqttPahoMessageDrivenChannelAdapter("backend-listener", mqttClientFactory(),
-                        "garden/data", "garden/state");
+                new MqttPahoMessageDrivenChannelAdapter(clientId, mqttClientFactory(),
+                        "garden/data/+/sensors",
+                        "garden/state/+/+",
+                        "garden/alert/+");
+
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(1);

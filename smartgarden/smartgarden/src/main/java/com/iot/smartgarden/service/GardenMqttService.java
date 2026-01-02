@@ -26,39 +26,49 @@ public class GardenMqttService {
         try {
             JsonNode json = objectMapper.readTree(payload);
 
-            // TRƯỜNG HỢP 1: Nhận dữ liệu cảm biến
-            if (topic.equals("garden/data")) {
+            // 1. Xử lý Dữ liệu Cảm biến (Topic: garden/data/esp32-01/sensors)
+            if (topic.contains("/sensors")) {
                 SensorData data = new SensorData();
-                // JSON mẫu: {"temp": 26.5, "humid": 70, "soil": 65, "light": 300}
+                // Khớp với key trong ESP32: doc["temp"], doc["humid"], doc["moisture"], doc["optical"]
                 if (json.has("temp")) data.setTemp(json.get("temp").asDouble());
                 if (json.has("humid")) data.setHumid(json.get("humid").asDouble());
-                if (json.has("soil")) data.setMoisture(json.get("soil").asInt());
-                if (json.has("light")) data.setOptical(json.get("light").asInt());
+                if (json.has("moisture")) data.setMoisture(json.get("moisture").asInt());
+                if (json.has("optical")) data.setOptical(json.get("optical").asInt());
 
-                // Timestamp lấy hiện tại hoặc từ ESP gửi lên
+                // ESP32 gửi timestamp dạng ISO 8601 (2024-05-20T10:00:00Z)
+
                 data.setTimestamp(System.currentTimeMillis() / 1000);
 
                 sensorRepository.save(data);
-                System.out.println("✅ Đã lưu sensor data: " + payload);
+                System.out.println(" Saved sensor data from topic: " + topic);
             }
 
-            // TRƯỜNG HỢP 2: Nhận phản hồi trạng thái thiết bị
-            else if (topic.equals("garden/state")) {
-                // JSON mẫu: {"device": "pump", "state": "ON"}
-                String deviceId = json.get("device").asText();
-                String state = json.get("state").asText();
+            // 2. Xử lý Trạng thái Thiết bị (Topic: garden/state/esp32-01/pump)
+            else if (topic.contains("garden/state/")) {
 
-                Device device = deviceRepository.findById(deviceId)
-                        .orElse(new Device(deviceId, "OFF", null));
+                String[] parts = topic.split("/");
+                String deviceName = parts[parts.length - 1]; // pump, fan, light...
 
+
+                String state = payload.trim();
+
+                Device device = deviceRepository.findById(deviceName)
+                        .orElse(new Device());
+                device.setDeviceId(deviceName);
                 device.setState(state);
                 device.setLastUpdated(LocalDateTime.now().toString());
                 deviceRepository.save(device);
-                System.out.println("🔄 Cập nhật trạng thái " + deviceId + ": " + state);
+                System.out.println(" Updated " + deviceName + " state to: " + state);
+            }
+
+            // 3. Xử lý Cảnh báo (Topic: garden/alert/esp32-01)
+            else if (topic.contains("garden/alert/")) {
+                System.out.println(" ALERT RECEIVED: " + payload);
+                // Bạn có thể tạo thêm AlertEntity để lưu vào DB ở đây
             }
 
         } catch (Exception e) {
-            System.err.println("Lỗi parse MQTT: " + e.getMessage());
+            System.err.println("Error parsing MQTT: " + e.getMessage());
         }
     }
 }
