@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Mặc định của trình duyệt là 16px.
+     - Muốn tăng 1.5 lần (To vừa) -> Đặt 24px
+     - Muốn tăng Gấp đôi (Rất to) -> Đặt 32px
+  */
+  font-size: 24px; 
+}
+
+/* Ép các Icon (Lucide) to theo tỉ lệ chữ */
+svg.lucide {
+  width: 1.5em !important; 
+  height: 1.5em !important;
+}
+
 * {
   margin: 0;
   padding: 0;

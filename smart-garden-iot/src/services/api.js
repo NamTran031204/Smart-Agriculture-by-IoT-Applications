@@ -15,8 +15,18 @@ const apiClient = axios.create({
 export const sensorAPI = {
   getLatest: async () => {
     const response = await apiClient.get('/sensors/latest');
-    return response.data; // Trả về đúng field: temp, humid, moisture, optical
+    return response.data;
   },
+
+  // --- THÊM HÀM NÀY ĐỂ VẼ BIỂU ĐỒ ---
+  getHistory: async (startTime, endTime) => {
+    // Backend yêu cầu tham số 'from' và 'to' (Unix timestamp tính bằng giây hoặc milisecond tùy data của bạn)
+    // Code Java của bạn đang lưu timestamp dạng giây (System.currentTimeMillis() / 1000)
+    const response = await apiClient.get('/sensors/history', {
+      params: { from: startTime, to: endTime }
+    });
+    return response.data;
+  }
 };
 
 export const deviceAPI = {
@@ -51,3 +61,4 @@ export const deviceAPI = {
     });
   }
 };
+

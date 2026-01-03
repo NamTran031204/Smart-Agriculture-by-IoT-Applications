@@ -1,11 +1,13 @@
+// src/hooks/useDevices.js
 import { useState, useEffect } from 'react';
 import { deviceAPI } from '../services/api';
 
-export const useDevices = () => {
+// Nhận tham số currentGardenId để lọc thiết bị theo từng vườn
+export const useDevices = (currentGardenId) => {
     const [devices, setDevices] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Helper: Lấy icon và màu sắc dựa trên ID hoặc Type
+    // Helper: Lấy icon và màu sắc dựa trên ID hoặc Type (Giữ logic thông minh của bản cũ)
     const getDeviceTypeInfo = (deviceId, typeOverride) => {
         const type = typeOverride || (deviceId.includes('fan') ? 'fan' : deviceId.includes('light') ? 'light' : 'pump');
         switch (type) {
@@ -22,8 +24,7 @@ export const useDevices = () => {
             // 1. Lấy trạng thái thực tế từ Backend (Chỉ chứa pump, fan, light thật)
             const backendDevices = await deviceAPI.getAllDevices();
 
-            // Tạo map trạng thái thật để tra cứu nhanh
-            // Ví dụ: { pump: 'ON', fan: 'OFF' }
+            // Tạo map trạng thái thật để tra cứu nhanh: { pump: 'ON', fan: 'OFF' }
             const realStateMap = {};
             backendDevices.forEach(d => {
                 realStateMap[d.deviceId] = d.state;
@@ -32,45 +33,47 @@ export const useDevices = () => {
             // 2. Lấy danh sách thiết bị ảo từ LocalStorage
             const customData = JSON.parse(localStorage.getItem('deviceCustomData') || '{}');
 
-            // 3. Trộn dữ liệu: Thiết bị ảo sẽ lấy trạng thái của thiết bị thật tương ứng
-            // Nếu customData rỗng (lần đầu chạy), dùng backendDevices làm gốc
-
             let finalDevicesList = [];
 
-            // A. Nếu chưa thêm thiết bị ảo nào, hiển thị thiết bị thật
+            // A. Nếu chưa thêm thiết bị ảo nào (lần đầu chạy), hiển thị thiết bị gốc
+            // Mặc định gán các thiết bị gốc này vào Vườn 1 (ID: 1)
             if (Object.keys(customData).length === 0) {
                 finalDevicesList = backendDevices.map(d => ({
                     ...d,
                     customName: d.deviceId,
                     zone: 'Hệ thống gốc',
                     type: d.deviceId.includes('fan') ? 'fan' : d.deviceId.includes('light') ? 'light' : 'pump',
+                    gardenId: 1, // Mặc định vườn 1
                     ...getDeviceTypeInfo(d.deviceId)
                 }));
             } else {
-                // B. Nếu đã có thiết bị ảo, hiển thị thiết bị ảo nhưng State lấy từ thiết bị thật
+                // B. Nếu đã có dữ liệu custom, map dữ liệu ảo với trạng thái thật
                 finalDevicesList = Object.entries(customData).map(([virtualId, info]) => {
-                    // Xác định xem thiết bị ảo này thuộc loại nào (pump/fan/light)
+                    // Xác định thiết bị ảo này link tới loại thật nào (pump/fan/light)
                     let realType = 'pump';
                     if (info.type === 'fan' || virtualId.includes('fan')) realType = 'fan';
                     else if (info.type === 'light' || virtualId.includes('light')) realType = 'light';
 
-                    // Lấy trạng thái thật từ Backend map (nếu không tìm thấy thì mặc định OFF)
-                    // Lưu ý: ID thật trong DB là "pump", "fan", "light"
+                    // Lấy trạng thái thật
                     const realState = realStateMap[realType] || 'OFF';
 
                     return {
-                        deviceId: virtualId, // ID ảo (để hiển thị và xóa)
+                        deviceId: virtualId,
                         customName: info.customName,
                         zone: info.zone,
                         type: info.type,
-                        state: realState, // <--- QUAN TRỌNG: Dùng trạng thái thật!
-                        lastUpdated: new Date().toISOString(), // Hoặc lấy từ real device nếu muốn
+                        gardenId: info.gardenId || 1, // Nếu dữ liệu cũ chưa có gardenId, mặc định là 1
+                        state: realState, // <--- QUAN TRỌNG: Dùng trạng thái thật từ backend
                         ...getDeviceTypeInfo(virtualId, info.type)
                     };
                 });
             }
 
-            setDevices(finalDevicesList);
+            // 3. LỌC THEO VƯỜN HIỆN TẠI
+            // Chỉ hiển thị thiết bị thuộc vườn đang chọn
+            const filteredDevices = finalDevicesList.filter(d => d.gardenId === currentGardenId);
+
+            setDevices(filteredDevices);
         } catch (error) {
             console.error('Error fetching devices:', error);
         } finally {
@@ -80,49 +83,50 @@ export const useDevices = () => {
 
     const toggleDevice = async (virtualDeviceId, currentState) => {
         try {
-            setLoading(true);
+            // Không set loading toàn cục để tránh nháy màn hình, chỉ xử lý nội bộ
             const newState = currentState === 'ON' ? 'OFF' : 'ON';
 
-            // --- LOGIC ĐỒNG BỘ UI (Optimistic Update) ---
+            // --- 1. OPTIMISTIC UPDATE (Cập nhật UI ngay lập tức - Logic cũ) ---
             setDevices(prev => {
-                // 1. Tìm xem thiết bị vừa bấm là loại gì (pump, fan hay light?)
                 const clickedDevice = prev.find(d => d.deviceId === virtualDeviceId);
-
-                // Nếu không tìm thấy hoặc chưa có type, mặc định coi là pump để an toàn
                 const targetType = clickedDevice ? clickedDevice.type : 'pump';
 
-                // 2. Duyệt qua TẤT CẢ thiết bị trên màn hình
-                // Nếu thiết bị nào có cùng 'type' (ví dụ cùng là 'pump') -> Cập nhật trạng thái hết!
+                // Cập nhật tất cả thiết bị cùng loại (vì thực tế chúng chung 1 relay)
                 return prev.map(d =>
                     d.type === targetType ? { ...d, state: newState } : d
                 );
             });
 
-            // --- GỌI API ---
-            // Gọi hàm api.js vừa sửa ở bước 1
+            // --- 2. GỌI API ---
             await deviceAPI.controlDevice(virtualDeviceId, newState);
 
-            // Fetch lại để chắc chắn data khớp với DB (tuỳ chọn)
-            // setTimeout(fetchDevices, 500); 
+            // --- 3. ĐỒNG BỘ LẠI (Logic mới) ---
+            // Gọi lại fetch để đảm bảo dữ liệu khớp với DB và các client khác
+            // Delay nhẹ để backend kịp xử lý
+            setTimeout(() => fetchDevices(), 500);
 
         } catch (error) {
             console.error('Control failed', error);
-            // Nếu lỗi thì load lại danh sách cũ để hòan tác
+            // Nếu lỗi, load lại dữ liệu cũ để hoàn tác
             fetchDevices();
-        } finally {
-            setLoading(false);
         }
     };
 
-    // Lưu thông tin custom vào LocalStorage
+    // Cập nhật hàm lưu: Thêm gardenId vào settings
     const saveDeviceSettings = (deviceId, settings) => {
         const customData = JSON.parse(localStorage.getItem('deviceCustomData') || '{}');
-        customData[deviceId] = settings;
+        
+        // Lưu setting kèm theo ID của vườn hiện tại
+        customData[deviceId] = { 
+            ...settings, 
+            gardenId: currentGardenId 
+        };
+        
         localStorage.setItem('deviceCustomData', JSON.stringify(customData));
         fetchDevices();
     };
 
-    // Xóa thiết bị (chỉ xóa custom data, vì DB backend cố định)
+    // Xóa thiết bị
     const deleteDeviceSettings = (deviceId) => {
         const customData = JSON.parse(localStorage.getItem('deviceCustomData') || '{}');
         delete customData[deviceId];
@@ -132,9 +136,18 @@ export const useDevices = () => {
 
     useEffect(() => {
         fetchDevices();
-        const interval = setInterval(fetchDevices, 5000); // Auto refresh
+        
+        // Auto refresh mỗi 3s để cập nhật trạng thái nếu bật từ nơi khác
+        const interval = setInterval(fetchDevices, 3000); 
         return () => clearInterval(interval);
-    }, []);
+    }, [currentGardenId]); // Chạy lại khi người dùng đổi vườn (quan trọng)
 
-    return { devices, loading, toggleDevice, saveDeviceSettings, deleteDeviceSettings, refetch: fetchDevices };
+    return { 
+        devices, 
+        loading, 
+        toggleDevice, 
+        saveDeviceSettings, 
+        deleteDeviceSettings, 
+        refetch: fetchDevices 
+    };
 };
