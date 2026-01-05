@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
-@CrossOrigin(origins = "*")    
+@RequestMapping("/api")   
 public class GardenController {
 
     @Autowired
