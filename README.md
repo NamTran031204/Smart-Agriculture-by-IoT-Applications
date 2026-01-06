@@ -1,142 +1,170 @@
-A. REST API (Dành cho Mobile App / Web Frontend)
-Các API này chạy trên port mặc định: 8080. Base URL: http://<IP_MAY_TINH>:8080
+# 🌿 Smart Garden IoT System
 
-1. Lấy dữ liệu Cảm biến (Sensor Data)
-Lấy dữ liệu mới nhất
+Hệ thống quản lý vườn thông minh sử dụng công nghệ IoT, cho phép giám sát môi trường và điều khiển thiết bị từ xa thông qua Web Dashboard.
 
-URL: GET /api/sensors/latest
+## 🛠 Tech Stack
 
-Mô tả: Trả về bản ghi nhiệt độ, độ ẩm... mới nhất nhận được từ vườn.
+- **Frontend:** ReactJS (Vite), TailwindCSS, Axios, Chart.js.
+- **Backend:** Java Spring Boot (Spring Security, JPA, MQTT Integration).
+- **Database:** PostgreSQL.
+- **Message Broker:** MQTT (Mosquitto/EMQX).
+- **Hardware:** ESP32.
 
-Response:
+---
 
-JSON
+## 🚀 Hướng dẫn chạy (Installation)
 
-{
+### 1. Khởi chạy Infrastructure (Docker)
+Chạy Database và MQTT Broker trước.
+
+```bash
+# Tại thư mục gốc của project
+docker-compose up -d postgres mqtt
+```
+
+### 2. Khởi chạy Backend (Spring Boot)
+* **Cấu hình:** Kiểm tra file `application.properties` để đảm bảo thông tin DB và MQTT khớp với Docker.
+* **Chạy:** Mở project bằng IntelliJ IDEA -> Run `SmartgardenApplication.java`.
+* **Tài khoản Admin mặc định:**
+  * Username: `admin`
+  * Password: `123`
+
+### 3. Khởi chạy Frontend (ReactJS)
+```bash
+cd smart-garden-iot
+npm install  # Cài đặt thư viện (chạy lần đầu)
+npm run dev  # Chạy server development
+```
+Truy cập: `http://localhost:3000`
+
+---
+
+## 📡 API Documentation (REST)
+
+**Base URL:** `http://localhost:8080`
+
+**Authentication:**
+Hệ thống sử dụng **JWT**. Trừ API Login/Register, tất cả request phải kèm Header:
+> `Authorization: Bearer <YOUR_TOKEN>`
+
+### 1. Authentication
+
+| Method | Endpoint | Mô tả | Body Request |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/users/login` | Đăng nhập lấy Token | `{ "username": "admin", "password": "123" }` |
+| `POST` | `/api/users/register` | Đăng ký tài khoản mới | `{ "username": "user1", "password": "123", "fullName": "Nguyen Van A" }` |
+
+### 2. Sensor Data (Dữ liệu cảm biến)
+
+#### Lấy dữ liệu mới nhất
+* **URL:** `GET /api/sensors/latest`
+* **Response:**
+  ```json
+  {
     "id": 105,
-    "temp": 26.5,
-    "humid": 60.0,
-    "moisture": 70,
-    "optical": 1000,
+    "temp": 26.5,       
+    "humid": 60.0,      
+    "moisture": 70,    
+    "optical": 1000,   
     "timestamp": 1730042123
-}
-Lấy lịch sử dữ liệu (Vẽ biểu đồ)
+  }
+  ```
 
-URL: GET /api/sensors/history
+#### Lấy lịch sử (Vẽ biểu đồ)
+* **URL:** `GET /api/sensors/history`
+* **Params:**
+  * `from`: Unix Timestamp bắt đầu.
+  * `to`: Unix Timestamp kết thúc.
+* **Ví dụ:** `/api/sensors/history?from=1730000000&to=1730090000`
 
-Params:
+### 3. Devices (Quản lý thiết bị)
 
-from: (Long) Unix Timestamp bắt đầu.
-
-to: (Long) Unix Timestamp kết thúc.
-
-Ví dụ: /api/sensors/history?from=1730000000&to=1730090000
-
-Response: Mảng JSON chứa danh sách các bản ghi như trên.
-
-2. Quản lý Thiết bị (Devices)
-Lấy danh sách trạng thái thiết bị
-
-URL: GET /api/devices
-
-Mô tả: Xem các thiết bị (Bơm, Đèn, Quạt) đang ON hay OFF.
-
-Response:
-
-JSON
-
-[
+#### Lấy danh sách thiết bị
+* **URL:** `GET /api/devices`
+* **Response:**
+  ```json
+  [
     {
-        "deviceId": "pump",
-        "state": "OFF",
-        "lastUpdated": "2025-11-25T23:45:00"
+      "deviceId": "pump",
+      "name": "Máy bơm",
+      "state": "OFF",
+      "type": "pump",
+      "lastUpdated": "2025-11-25T23:45:00"
     },
     {
-        "deviceId": "fan",
-        "state": "ON",
-        "lastUpdated": "2025-11-25T23:40:00"
+      "deviceId": "fan",
+      "name": "Quạt thông gió",
+      "state": "ON",
+      "type": "fan",
+      "lastUpdated": "2025-11-25T23:40:00"
     }
-]
-3. Điều khiển Thiết bị (Control)
-Gửi lệnh Bật/Tắt
+  ]
+  ```
 
-URL: POST /api/control/{deviceId}
-
-Path Variable: {deviceId} là tên thiết bị (ví dụ: pump, fan, light).
-
-Body:
-
-JSON
-
-{
+#### Điều khiển thiết bị
+* **URL:** `POST /api/control/{gatewayId}/{deviceId}`
+* **Ví dụ:** `/api/control/esp32-01/pump`
+* **Body:**
+  ```json
+  {
     "state": "ON" 
-}
-(Hoặc "OFF")
+  }
+  ```
+  *(Giá trị: "ON" hoặc "OFF")*
 
-Mô tả: Backend sẽ nhận lệnh này và bắn tín hiệu MQTT xuống ESP32.
+---
 
-B. MQTT TOPICS (Dành cho ESP32 / Hardware)
-Broker chạy trên port: 1883.
+## 🔌 MQTT Specification (Hardware)
 
-1. ESP32 Gửi lên (Publish)
-Dữ liệu cảm biến
+**Broker Port:** `1883`
 
-Topic: garden/data
-
-Format (JSON):
-
-JSON
-
-{
+### 1. Publish (ESP32 gửi lên)
+* **Topic:** `garden/data`
+* **Payload:**
+  ```json
+  {
     "temp": 25.5,
     "humid": 60.2,
-    "soil": 65,    
-    "light": 300   
-}
-Tần suất: Khuyến nghị gửi 5s - 10s một lần hoặc khi có thay đổi lớn.
+    "soil": 65,     
+    "light": 300    
+  }
+  ```
+* **Topic Feedback:** `garden/state` (Gửi xác nhận khi thiết bị đã bật/tắt thành công).
 
-Phản hồi trạng thái (Feedback)
-
-Topic: garden/state
-
-Mục đích: Báo cáo lại cho server biết thiết bị đã thực sự bật/tắt thành công chưa.
-
-Format:
-
-JSON
-
-{
-    "device": "pump",
+### 2. Subscribe (ESP32 nhận lệnh)
+* **Topic:** `garden/command/#` (Ví dụ: `garden/command/pump`)
+* **Payload:**
+  ```json
+  {
     "state": "ON"
-}
-2. ESP32 Lắng nghe (Subscribe)
-Nhận lệnh điều khiển
+  }
+  ```
 
-Topic: garden/command/# (Hoặc cụ thể garden/command/pump, garden/command/fan...)
+---
 
-Format:
+## 🗄 Database Schema (PostgreSQL)
 
-JSON
+### Users Table
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `username` | Varchar | Unique |
+| `password` | Varchar | Encoded |
+| `role` | Varchar | `ADMIN` / `USER` |
 
-{
-    "state": "ON"
-}
-Logic: Khi nhận được payload này tại topic tương ứng, ESP32 sẽ kích relay để bật/tắt thiết bị vật lý.
+### Sensor_Data Table
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `temp` | Double | Nhiệt độ |
+| `humid` | Double | Độ ẩm không khí |
+| `moisture` | Integer | Độ ẩm đất |
+| `optical` | Integer | Ánh sáng |
+| `timestamp` | BigInt | Thời gian đo |
 
-C. Database Schema (PostgreSQL)
-Table: sensor_data
-Column	Type	Description
-id	BigInt (PK)	Tự tăng
-temp	Double	Nhiệt độ
-humid	Double	Độ ẩm không khí
-moisture	Integer	Độ ẩm đất
-optical	Integer	Cường độ sáng
-timestamp	BigInt	Thời gian đo (Unix)
-
-
-
-Table: devices
-Column	Type	Description
-device_id	Varchar (PK)	Mã thiết bị (pump, fan...)
-state	Varchar	Trạng thái (ON/OFF)
-last_updated	Varchar	Thời gian cập nhật cuối
+### Devices Table
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `device_id` | Varchar | ID thiết bị (pump, fan...) |
+| `state` | Varchar | Trạng thái hiện tại |
+| `last_updated` | Varchar | Thời gian cập nhật |
