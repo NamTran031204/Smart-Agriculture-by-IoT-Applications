@@ -1,6 +1,7 @@
 package com.iot.smartgarden.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 @Entity
 @Table(name = "gardens")
 public class Garden {
@@ -12,6 +13,7 @@ public class Garden {
     // FK -> users.id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference // Ngăn Jackson serialize ngược lại User -> gây lặp vô hạn
     private User user;
 
     @Column(length = 100, nullable = false)

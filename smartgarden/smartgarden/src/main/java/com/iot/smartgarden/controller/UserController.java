@@ -27,6 +27,10 @@ public class UserController {
 
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest request) {
+
+        System.out.println("DEBUG LOGIN - Username received: [" + request.getUsername() + "]");
+        System.out.println("DEBUG LOGIN - Password received: [" + request.getPassword() + "]");
+
         return userService.login(request.getUsername(), request.getPassword());
     }
 

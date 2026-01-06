@@ -1,9 +1,11 @@
 package com.iot.smartgarden.entity;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -39,6 +41,19 @@ public class User {
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference // Bắt buộc: Để Jackson biết đây là chiều xuôi, sẽ serialize
+    private List<Garden> gardens;
+
+    // Getter và Setter cho gardens
+    public List<Garden> getGardens() {
+        return gardens;
+    }
+
+    public void setGardens(List<Garden> gardens) {
+        this.gardens = gardens;
+    }
 
     // ===== lifecycle =====
     @PrePersist
