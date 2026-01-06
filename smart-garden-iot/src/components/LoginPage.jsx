@@ -14,23 +14,27 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
 
     if (isLogin) {
       // Xử lý Đăng nhập
-      const result = login(username, password);
+      // 2. THÊM AWAIT Ở ĐÂY
+      const result = await login(username, password); 
       if (!result.success) {
         setError(result.message);
       }
     } else {
       // Xử lý Đăng ký
-      const result = register(username, password, fullName);
+      // 3. THÊM AWAIT Ở ĐÂY
+      const result = await register(username, password, fullName);
+      
+      // Bây giờ result mới có giá trị thực, if (true) mới chạy được
       if (result.success) {
         setSuccessMsg(result.message);
-        // Tự động chuyển về tab đăng nhập sau 1s
+        // Tự động chuyển về tab đăng nhập sau 1.5s
         setTimeout(() => setIsLogin(true), 1500);
       } else {
         setError(result.message);

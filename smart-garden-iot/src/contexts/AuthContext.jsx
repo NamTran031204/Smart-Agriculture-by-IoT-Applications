@@ -1,5 +1,7 @@
 // src/contexts/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext(null);
 
@@ -10,40 +12,57 @@ export const AuthProvider = ({ children }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const login = (username, password) => {
-    // --- MOCK DATA LOGIC ---
-    if (username === 'admin' && password === '123') {
-      const adminUser = { 
-        id: 1, 
-        username: 'admin', 
-        fullName: 'Quản Trị Viên', 
-        role: 'ADMIN',
-        avatar: 'https://ui-avatars.com/api/?name=Admin&background=10B981&color=fff'
-      };
-      setUser(adminUser);
-      localStorage.setItem('currentUser', JSON.stringify(adminUser));
-      return { success: true };
-    }
-    
-    if (username === 'user' && password === '456') {
-      const normalUser = { 
-        id: 2, 
-        username: 'user', 
-        fullName: 'Khách Hàng', 
-        role: 'USER',
-        avatar: 'https://ui-avatars.com/api/?name=User&background=3B82F6&color=fff' 
-      };
-      setUser(normalUser);
-      localStorage.setItem('currentUser', JSON.stringify(normalUser));
-      return { success: true };
-    }
+  const login = async (username, password) => {
+    try {
+        // 1. Gọi API
+        const res = await axios.post('http://localhost:8080/api/users/login', { username, password });
+        
+        // 2. Backend trả về token (dạng String)
+        const token = res.data; 
 
-    return { success: false, message: 'Tài khoản hoặc mật khẩu không đúng!' };
+        // 3. Giải mã token để lấy role và username
+        // Nếu không cài jwt-decode, token có 3 phần, phần giữa là payload base64
+        const decoded = jwtDecode(token); 
+        // decoded sẽ có dạng: { sub: "username", role: "ADMIN", exp: ... }
+
+        const userData = {
+            username: decoded.sub, // hoặc decoded.username tùy backend config
+            role: decoded.role,    // Backend Java của bạn lưu key là "role"
+            fullName: username,    // Backend API login hiện tại chưa trả về fullName, tạm lấy username
+            token: token           // Lưu token để dùng cho các request sau
+        };
+
+        // 4. Lưu vào State và LocalStorage
+        setUser(userData);
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        localStorage.setItem('token', token); // Lưu riêng token để tiện gắn vào Header
+
+        return { success: true };
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        return { success: false, message: 'Sai tài khoản hoặc mật khẩu!' };
+    }
   };
 
-  const register = (username, password, fullName) => {
-    // Mock Register: Luôn báo thành công (chưa lưu thật)
-    return { success: true, message: 'Đăng ký thành công! Hãy đăng nhập.' };
+  const register = async (username, password, fullName, email) => {
+    try {
+      // Gọi API xuống Backend để tạo user thật
+      await axios.post('http://localhost:8080/api/users/register', {
+        username: username,
+        password: password,
+        fullName: fullName,
+        email: email || "", // Email có thể để trống nếu form không có
+        role: "USER"        // Mặc định là USER thường
+      });
+      
+      return { success: true, message: 'Đăng ký thành công! Hãy đăng nhập.' };
+    } catch (error) {
+      console.error("Register Error:", error);
+      // Lấy thông báo lỗi từ Backend nếu có
+      const msg = error.response?.data?.message || 'Đăng ký thất bại (Trùng username?)';
+      return { success: false, message: msg };
+    }
   };
 
   const logout = () => {

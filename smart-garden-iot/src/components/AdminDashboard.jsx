@@ -1,11 +1,11 @@
 // src/components/AdminDashboard.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Users, Sprout, Cpu, Search, Trash2, Eye, 
   MoreVertical, LogOut, ShieldCheck, X 
 } from 'lucide-react';
-
+import axios from 'axios';
 // --- MOCK DATA DÀNH CHO ADMIN ---
 const INITIAL_USERS = [
   {
@@ -68,15 +68,36 @@ const INITIAL_USERS = [
 
 const AdminDashboard = () => {
   const { logout, user } = useAuth();
-  const [users, setUsers] = useState(INITIAL_USERS);
+  const [users, setUsers] = useState([])
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null); // Để hiện Modal chi tiết
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        // Gọi API Backend: GET /api/users
+        // Cần token trong header (sẽ cấu hình sau hoặc thêm thủ công nếu chưa có interceptor)
+        const token = localStorage.getItem('token'); 
+        const response = await axios.get('http://localhost:8080/api/users', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Lỗi tải danh sách user:", error);
+        // Nếu lỗi thì dùng tạm data giả để test giao diện
+        // setUsers(INITIAL_USERS); 
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
   // Tính toán thống kê
   const totalUsers = users.length;
-  const totalGardens = users.reduce((acc, u) => acc + u.gardens.length, 0);
-  const totalDevices = users.reduce((acc, u) => acc + u.gardens.reduce((dAcc, g) => dAcc + g.devices.length, 0), 0);
-
+  const totalGardens = users.reduce((acc, u) => acc + (u.gardens?.length || 0), 0);
+  const totalDevices = users.reduce((acc, u) => 
+    acc + (u.gardens || []).reduce((dAcc, g) => dAcc + (g.devices?.length || 0), 0), 0
+  );
   // Lọc user theo tìm kiếm
   const filteredUsers = users.filter(u => 
     u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -180,7 +201,7 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((u) => {
-                  const userDeviceCount = u.gardens.reduce((acc, g) => acc + g.devices.length, 0);
+                  const userDeviceCount = (u.gardens || []).reduce((acc, g) => acc + (g.devices?.length || 0), 0);
                   return (
                     <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                       <td className="p-4">
@@ -197,7 +218,7 @@ const AdminDashboard = () => {
                       <td className="p-4 text-sm text-gray-600">{u.joinDate}</td>
                       <td className="p-4 text-center">
                         <span className="bg-green-100 text-green-700 py-1 px-3 rounded-full text-xs font-bold">
-                          {u.gardens.length}
+                          {u.gardens?.length || 0}
                         </span>
                       </td>
                       <td className="p-4 text-center">
@@ -264,7 +285,7 @@ const AdminDashboard = () => {
 
             {/* Modal Body */}
             <div className="p-6 max-h-[60vh] overflow-y-auto bg-gray-50">
-              {selectedUser.gardens.length === 0 ? (
+              {(selectedUser.gardens || []).length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
                   User này chưa tạo vườn nào.
                 </div>
