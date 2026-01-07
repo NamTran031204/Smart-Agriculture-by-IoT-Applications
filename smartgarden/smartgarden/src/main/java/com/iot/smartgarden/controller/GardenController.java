@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
-
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -56,11 +56,19 @@ public class GardenController {
 
         String state = body.get("state"); // "ON" hoặc "OFF"
 
-        //  TOPIC_CMD_WILDCARD trong ESP32: garden/command/esp32-01/#
+        // 1. Gửi lệnh MQTT
         String topic = "garden/command/" + deviceId + "/" + component;
-
-        // Gửi payload thô "ON" hoặc "OFF" để ESP32 strstr()
         mqttGateway.sendToMqtt(state, topic);
+
+        // 2. CẬP NHẬT DATABASE NGAY LẬP TỨC
+        // Tìm thiết bị trong DB, nếu chưa có thì tạo mới (để tránh lỗi null)
+        // component chính là id thiết bị thật: 'pump', 'fan', 'light'
+        Device device = deviceRepository.findById(component).orElse(new Device());
+        device.setDeviceId(component);
+        device.setState(state);
+        device.setLastUpdated(LocalDateTime.now().toString());
+
+        deviceRepository.save(device); // Lưu luôn trạng thái mới
 
         return "Sent " + state + " to " + component + " on device " + deviceId;
     }
