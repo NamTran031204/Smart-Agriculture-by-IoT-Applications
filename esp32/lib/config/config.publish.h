@@ -47,4 +47,10 @@
 #define SEND_INTERVAL 60000  // 60 seconds
 #define READ_INTERVAL 2000
 
+// controller
+#define PUMP_PIN 26
+#define FAN_PIN 27
+#define LIGHT_PIN 14
+#define HUMIDIFIER_PIN 12
+
 #endif

@@ -9,8 +9,8 @@ Gói tin này gộp tất cả dữ liệu cảm biến, được gửi định 
       "timestamp": "Number (Unix Timestamp)",
       "temp": "Number (Float, độ C)",
       "humid": "Number (Float, %)",
-      "optical": "Number (Integer, Lux hoặc giá trị ADC)",
-      "moisture": "Number (Integer, giá trị ADC)"
+      "optical": "Number (float, %)",
+      "moisture": "Number (Integer, %)"
     }
     ```
 
@@ -114,5 +114,5 @@ Một mảng các Object chứa những trường sau:
 | `type` | `value` | `message` | Ý nghĩa |
 | :--- | :--- | :--- | :--- |
 | **`HIGH_TEMP`** | (Float) Giá trị nhiệt độ | "Nhiet do qua cao\!" | Nhiệt độ không khí (từ DHT22) vượt ngưỡng cho phép (ví dụ: 35°C). |
-| **`LOW_MOISTURE`**| (Integer) Giá trị ẩm đất | "Dat qua kho, can tuoi cay\!" | Độ ẩm đất (từ cảm biến) thấp hơn ngưỡng (ví dụ: \< 300). |
+| **`LOW_MOISTURE`**| (float) Giá trị ẩm đất | "Dat qua kho, can tuoi cay\!" | Độ ẩm đất (từ cảm biến) thấp hơn ngưỡng (ví dụ: \< 30). |
 | **`HIGH_HUMIDITY`**| (Float) Giá trị độ ẩm | "Do am khong khi qua cao, nguy co nam moc\!" | Độ ẩm không khí (từ DHT22) cao hơn ngưỡng (ví dụ: \> 85%). |

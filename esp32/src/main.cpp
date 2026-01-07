@@ -11,8 +11,6 @@
 
 #include "environment.config.h"
 
-DHT dht(DHTPin, DHTTYPE);
-
 //timer
 unsigned long lastDataSend = 0;
 const long sendInterval = SEND_INTERVAL;
@@ -23,6 +21,10 @@ PubSubClient client(espClientSecure);
 
 String getISOTimestamp();
 void reconnectMQTT();
+
+void pinsSetup();
+void setupOutputStatus();
+
 void publishSensorData(float temp, float humid, int optical, float moisture);
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 void setupWifi();
@@ -33,13 +35,17 @@ float readHumidity();
 float readSoilMoisture();
 int readLightIntensity();
 
+DHT dht;
+
 void setup() {
   Serial.begin(115200);
   delay(5000);
 
+  pinsSetup();
+
+  setupOutputStatus();
+
   dht.begin();
-  pinMode(SOIL_MOISTURE_PIN, INPUT);
-  pinMode(LIGHT_SENSOR_AO, INPUT);
 
   setupWifi();
 
@@ -103,6 +109,25 @@ void loop() {
   delay(READ_INTERVAL);
 }
 
+void pinsSetup() {
+  dht = DHT(DHTPin, DHTTYPE);
+
+  pinMode(SOIL_MOISTURE_PIN, INPUT);
+  pinMode(LIGHT_SENSOR_AO, INPUT);
+
+  pinMode(PUMP_PIN, OUTPUT);
+  pinMode(FAN_PIN, OUTPUT);
+  pinMode(LIGHT_PIN, OUTPUT);
+  pinMode(HUMIDIFIER_PIN, OUTPUT);
+}
+
+void setupOutputStatus() {
+  digitalWrite(PUMP_PIN, LOW);
+  digitalWrite(FAN_PIN, LOW);
+  digitalWrite(LIGHT_PIN, LOW);
+  digitalWrite(HUMIDIFIER_PIN, LOW);
+}
+
 void publishSensorData(float temp, float humid, int optical, float moisture) {
 
   checkAlerts(temp, humid, optical, moisture);
@@ -157,36 +182,39 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     stateTopic = TOPIC_STATE_PUMP;
     if (payloadString == "ON") {
       Serial.println("pump on");
-      //digital write cho pump
+      digitalWrite(PUMP_PIN, HIGH);
     } else if (payloadString == "OFF") {
       Serial.println("pump off");
-      //digital write cho pump
+      digitalWrite(PUMP_PIN, LOW);
     }
   } 
   else if (strstr(topic, "/fan")) {
     stateTopic = TOPIC_STATE_FAN;
     if (payloadString == "ON") {
       Serial.println("fan on");
-      //digital write cho fan
+      digitalWrite(FAN_PIN, HIGH);
     } else if (payloadString == "OFF") {
       Serial.println("fan off");
-      //digital write cho fan
+      digitalWrite(FAN_PIN, LOW);
     }
   }
   else if (strstr(topic, "/light")) {
     stateTopic = TOPIC_STATE_LIGHT;
-     // light on/off - setup thoi gian sang den
-     Serial.println("light on");
+    digitalWrite(LIGHT_PIN, HIGH);
+    Serial.println("light on");
   }
   else if (strstr(topic, "/humidifier")) {
     stateTopic = TOPIC_STATE_HUMIDIFIER;
-    // may phun suong on/off
+    digitalWrite(HUMIDIFIER_PIN, HIGH);
     Serial.println("humidifier on");
   }
 
   if (stateTopic != NULL) {
-    client.publish(stateTopic, payloadStr);
-    Serial.printf("Replied state to %s: %s\n", stateTopic, payloadStr);
+    if (client.publish(stateTopic, payloadStr)) {
+      Serial.printf("Replied state to %s: %s\n", stateTopic, payloadStr);
+    } else {
+      Serial.println("Failed to publish state");
+    }
   }
 }
 
