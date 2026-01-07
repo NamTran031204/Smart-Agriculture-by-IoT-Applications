@@ -35,7 +35,7 @@ float readHumidity();
 float readSoilMoisture();
 int readLightIntensity();
 
-DHT dht;
+DHT dht(DHTPin, DHTTYPE);
 
 void setup() {
   Serial.begin(115200);
@@ -110,8 +110,6 @@ void loop() {
 }
 
 void pinsSetup() {
-  dht = DHT(DHTPin, DHTTYPE);
-
   pinMode(SOIL_MOISTURE_PIN, INPUT);
   pinMode(LIGHT_SENSOR_AO, INPUT);
 
@@ -254,7 +252,7 @@ void reconnectMQTT() {
 
 void checkAlerts(float temp, float humid, int optical, float moisture) {
   
-  StaticJsonDocument<512> alertDoc; 
+  JsonDocument alertDoc;
   JsonArray alerts = alertDoc.to<JsonArray>(); 
   
   char alertPayload[512];
@@ -294,8 +292,6 @@ void checkAlerts(float temp, float humid, int optical, float moisture) {
 float readTemperature() {
   float temp = dht.readTemperature();
   if(isnan(temp)){
-    temp = NULL;
-
     // send request to user to control;
 
     Serial.println("DHT temperature sensor was failed");
@@ -306,8 +302,6 @@ float readTemperature() {
 float readHumidity() {
   float humid = dht.readHumidity();
   if(isnan(humid)){
-    humid = NULL;
-
     // send request to user to control;
 
     Serial.println("DHT humidity sensor was failed");
