@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { Plus, Sprout, MapPin, ChevronDown, Trash2, LogOut } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -91,10 +90,8 @@ const Dashboard = () => {
   const currentGarden = gardens.find(g => g.id === selectedGardenId) || gardens[0];
 
   return (
-    // Sửa: Dùng 2xl làm mốc chuẩn
     <div className="min-h-screen bg-slate-100 pb-32 2xl:pb-8">
       
-      {/* Header Mobile: Hiện cho đến khi màn hình cực to (2xl) */}
       <div className="2xl:hidden relative">
          <Header onRefresh={handleRefresh} loading={devicesLoading} />
          <button 
@@ -106,14 +103,10 @@ const Dashboard = () => {
          </button>
       </div>
 
-      {/* Main Container */}
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 2xl:px-8 pt-4 2xl:pt-8 space-y-8">
 
-        {/* --- SECTION 1: HERO --- */}
-        {/* CHỈ chuyển sang hàng ngang khi màn hình > 1536px (2xl:flex-row) */}
         <div className="bg-white rounded-3xl shadow-sm p-6 2xl:p-8 flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-8">
           
-          {/* Chọn Vườn */}
           <div className="flex items-start gap-4 2xl:w-auto 2xl:min-w-[400px]">
             <div className="bg-green-100 p-4 rounded-2xl hidden 2xl:block">
               <Sprout className="text-green-600 h-10 w-10" />
@@ -167,16 +160,12 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* --- SECTION 2: GRID CONTENT --- */}
-        {/* CHỈ chia cột khi màn hình > 1536px */}
         <div className="grid grid-cols-1 2xl:grid-cols-12 gap-8 items-start">
           
-          {/* Biểu đồ */}
           <div className="2xl:col-span-8">
             <ChartSection />
           </div>
 
-          {/* Thiết bị */}
           <div className="2xl:col-span-4 bg-white rounded-3xl shadow-sm p-6">
              <div className="flex items-center justify-between mb-8">
               <h3 className="font-bold text-gray-900 text-2xl">Thiết bị ({devices.length})</h3>
@@ -195,8 +184,6 @@ const Dashboard = () => {
                       <p className="text-gray-500 text-xl">Chưa có thiết bị nào</p>
                   </div>
               ) : (
-                // Trên mọi màn hình nhỏ hơn 2xl, hiển thị 2 cột thiết bị cho thoáng
-                // Chỉ trên màn hình cực to mới về 1 cột
                 <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-1 gap-6">
                   {devices.map((device) => (
                     <DeviceCard
@@ -223,7 +210,6 @@ const Dashboard = () => {
         isEditing={!!editingDevice} 
       />
       
-      {/* Bottom Nav chỉ ẩn khi màn hình 2xl */}
       <div className="2xl:hidden">
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
@@ -238,7 +224,6 @@ const MainScreen = () => {
     return <LoginPage />;
   }
 
-  // --- THÊM LOGIC KIỂM TRA ROLE ---
   if (user.role === 'ADMIN') {
     return <AdminDashboard />;
   }

@@ -30,7 +30,7 @@ public class SecurityConfig {
                                 "/api/users/login",
                                 "/api/users/register"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(new JwtFilter(jwtUtil),
                         UsernamePasswordAuthenticationFilter.class);

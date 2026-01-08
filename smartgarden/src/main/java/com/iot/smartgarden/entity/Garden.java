@@ -9,7 +9,6 @@ public class Garden {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // FK -> users.id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -23,16 +22,13 @@ public class Garden {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // ===== lifecycle =====
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
 
-    // ===== constructor =====
     public Garden() {}
 
-    // ===== getter & setter =====
     public Long getId() {
         return id;
     }

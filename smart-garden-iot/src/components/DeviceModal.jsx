@@ -33,7 +33,6 @@ const DeviceModal = ({ isOpen, onClose, initialData, onSave, isEditing }) => {
         </div>
 
         <div className="space-y-4">
-          {/* Chọn loại thiết bị */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Loại thiết bị</label>
             <div className="grid grid-cols-3 gap-2">
@@ -52,7 +51,6 @@ const DeviceModal = ({ isOpen, onClose, initialData, onSave, isEditing }) => {
             </div>
           </div>
 
-          {/* Input ID */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">ID thiết bị {isEditing && '(Không đổi)'}</label>
             <input
@@ -67,7 +65,6 @@ const DeviceModal = ({ isOpen, onClose, initialData, onSave, isEditing }) => {
             />
           </div>
 
-          {/* Input Tên & Zone */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tên hiển thị</label>
             <input

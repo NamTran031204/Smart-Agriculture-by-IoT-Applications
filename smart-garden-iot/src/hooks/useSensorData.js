@@ -16,7 +16,6 @@ export const useSensorData = (autoRefresh = true) => {
     } catch (err) {
       console.error('Error fetching sensor data:', err);
       setError(err.message);
-      // Fallback to mock data if API fails
       setSensorData(MOCK_SENSOR_DATA);
     } finally {
       setLoading(false);

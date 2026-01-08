@@ -139,7 +139,7 @@ void publishSensorData(float temp, float humid, int optical, float moisture) {
   Serial.print(timestamp);
 
   //json packaging
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
   doc["timestamp"] = timestamp;
   doc["temp"] = temp;
   doc["humid"] = humid;

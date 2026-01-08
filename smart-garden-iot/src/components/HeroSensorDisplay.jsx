@@ -1,9 +1,7 @@
-// src/components/HeroSensorDisplay.jsx
 import React from 'react';
 import { Thermometer, Droplets, Wind, Sun, RefreshCw } from 'lucide-react';
 
 const SensorItem = ({ icon: Icon, label, value, unit, colorClass }) => (
-  // Thêm min-w-[140px] để đảm bảo ô không bị bóp quá nhỏ
   <div className="flex items-center p-4 rounded-2xl hover:bg-gray-50 transition-colors flex-1 min-w-[140px]">
     <div className={`${colorClass} p-3 rounded-full mr-4`}>
       <Icon size={28} className="text-current" />
@@ -23,7 +21,6 @@ const HeroSensorDisplay = ({ sensorData, onRefresh, loading }) => {
 
   return (
     <div className="relative h-full flex flex-col justify-center">
-      {/* Nút refresh */}
       <button 
         onClick={onRefresh} 
         disabled={loading}
@@ -33,11 +30,8 @@ const HeroSensorDisplay = ({ sensorData, onRefresh, loading }) => {
         <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
       </button>
       
-      {/* --- SỬA Ở ĐÂY --- */}
-      {/* Thay vì ép 4 cột (lg:grid-cols-4), ta dùng 2 cột (grid-cols-2) cho rộng rãi */}
       <div className="grid grid-cols-2 gap-4 lg:gap-6">
         
-        {/* Không cần thẻ div bọc ngoài (lg:pl-2) nữa để layout gọn gàng hơn */}
         <SensorItem
           icon={Thermometer} label="Nhiệt độ KK"
           value={temp} unit="°C" colorClass="bg-red-100 text-red-600"

@@ -1,4 +1,3 @@
-// src/components/AdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -6,7 +5,6 @@ import {
   MoreVertical, LogOut, ShieldCheck, X 
 } from 'lucide-react';
 import axios from 'axios';
-// --- MOCK DATA DÀNH CHO ADMIN ---
 const INITIAL_USERS = [
   {
     id: 1,
@@ -75,8 +73,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Gọi API Backend: GET /api/users
-        // Cần token trong header (sẽ cấu hình sau hoặc thêm thủ công nếu chưa có interceptor)
         const token = localStorage.getItem('token'); 
         const response = await axios.get('http://localhost:8080/api/users', {
             headers: { Authorization: `Bearer ${token}` }
@@ -84,21 +80,17 @@ const AdminDashboard = () => {
         setUsers(response.data);
       } catch (error) {
         console.error("Lỗi tải danh sách user:", error);
-        // Nếu lỗi thì dùng tạm data giả để test giao diện
-        // setUsers(INITIAL_USERS); 
       }
     };
 
     fetchUsers();
   }, []);
 
-  // Tính toán thống kê
   const totalUsers = users.length;
   const totalGardens = users.reduce((acc, u) => acc + (u.gardens?.length || 0), 0);
   const totalDevices = users.reduce((acc, u) => 
     acc + (u.gardens || []).reduce((dAcc, g) => dAcc + (g.devices?.length || 0), 0), 0
   );
-  // Lọc user theo tìm kiếm
   const filteredUsers = users.filter(u => 
     u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.username.toLowerCase().includes(searchTerm.toLowerCase())

@@ -1,4 +1,3 @@
-// src/components/ChartSection.jsx
 import React, { useEffect, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { sensorAPI } from '../services/api';
@@ -9,14 +8,12 @@ const ChartSection = () => {
   const [data, setData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Tạo danh sách 7 ngày trong tuần hiện tại (bắt đầu từ Thứ 2)
   const daysOfWeek = Array.from({ length: 7 }).map((_, i) => 
     addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
   );
 
   useEffect(() => {
     const fetchData = async () => {
-      // Nếu là ngày tương lai thì không load data (trừ khi là hôm nay)
       if (isFuture(selectedDate) && !isSameDay(selectedDate, new Date())) {
         setData([]);
         return;
@@ -35,7 +32,7 @@ const ChartSection = () => {
           }));
           setData(formattedData);
         } else {
-            setData([]); // Xóa data cũ nếu ngày này không có dữ liệu
+            setData([]);
         }
       } catch (error) {
         console.error("Lỗi tải lịch sử:", error);
@@ -46,18 +43,15 @@ const ChartSection = () => {
     fetchData();
   }, [selectedDate]);
 
+  console.log("data", data)
   return (
-    // Container chính: Xóa margin âm, thêm padding lớn hơn, bo góc to hơn
     <div className="bg-white p-6 lg:p-8 rounded-3xl shadow-sm h-full flex flex-col">
       
-      {/* Header & Date Selector */}
       <div className="flex flex-col gap-6 mb-4">
-        {/* Tiêu đề to hơn (text-xl) */}
         <h3 className="font-bold text-gray-900 text-xl flex items-center gap-2">
            Thống kê tuần này
         </h3>
         
-        {/* Thanh chọn ngày */}
         <div className="flex justify-between bg-gray-50 p-2 rounded-2xl">
           {daysOfWeek.map((day, i) => {
             const isSelected = isSameDay(day, selectedDate);
@@ -68,7 +62,6 @@ const ChartSection = () => {
                 key={i}
                 onClick={() => !isFutureDate && setSelectedDate(day)}
                 disabled={isFutureDate}
-                // Button to hơn trên desktop (lg:w-16 lg:h-20), bo góc lớn hơn
                 className={`flex flex-col items-center justify-center 
                   w-12 h-16 lg:w-16 lg:h-20 
                   rounded-xl lg:rounded-2xl 
@@ -90,61 +83,56 @@ const ChartSection = () => {
         </div>
       </div>
 
-      {/* Chart Area: Cao hơn hẳn trên desktop (lg:h-96) */}
       <div className="h-64 lg:h-96 text-xs lg:text-sm mt-6 flex-1">
-        {data.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorHumid" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="time" 
-                tick={{fontSize: 12, fill: '#6b7280'}} 
-                axisLine={false}
-                tickLine={false}
-                minTickGap={30} 
-                dy={10}
-              />
-              <YAxis 
-                tick={{fontSize: 12, fill: '#6b7280'}} 
-                axisLine={false}
-                tickLine={false}
-                dx={-10}
-              />
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
-                itemStyle={{ fontSize: '14px', fontWeight: 500 }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="temp" 
-                stroke="#ef4444" 
-                strokeWidth={3}
-                fill="url(#colorTemp)" 
-                name="Nhiệt độ" 
-                activeDot={{ r: 6, strokeWidth: 0 }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="humid" 
-                stroke="#3b82f6" 
-                strokeWidth={3}
-                fill="url(#colorHumid)" 
-                name="Độ ẩm" 
-                activeDot={{ r: 6, strokeWidth: 0 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        ) : (
+          {data.length > 0 ? (
+              <div className="h-full overflow-auto">
+                  <div className="grid grid-cols-3 gap-4 mb-4 pb-3 border-b-2 border-gray-100 sticky top-0 bg-white">
+                      <div className="text-center font-bold text-gray-700">Thời gian</div>
+                      <div className="text-center font-bold text-red-500">Nhiệt độ (°C)</div>
+                      <div className="text-center font-bold text-blue-500">Độ ẩm (%)</div>
+                  </div>
+
+                  <div className="space-y-2">
+                      {data.map((item, index) => (
+                          <div
+                              key={index}
+                              className="grid grid-cols-3 gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                          >
+                              <div className="text-center text-gray-600 font-medium">
+                                  {item.time}
+                              </div>
+                              <div className="text-center">
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 font-bold rounded-lg">
+              🌡️ {item.temp}°C
+            </span>
+                              </div>
+                              <div className="text-center">
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 font-bold rounded-lg">
+              💧 {item.humid}%
+            </span>
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t-2 border-gray-100">
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-red-50 p-4 rounded-xl">
+                              <div className="text-xs text-gray-500 mb-1">Nhiệt độ trung bình</div>
+                              <div className="text-2xl font-bold text-red-600">
+                                  {(data.reduce((sum, item) => sum + parseFloat(item.temp), 0) / data.length).toFixed(1)}°C
+                              </div>
+                          </div>
+                          <div className="bg-blue-50 p-4 rounded-xl">
+                              <div className="text-xs text-gray-500 mb-1">Độ ẩm trung bình</div>
+                              <div className="text-2xl font-bold text-blue-600">
+                                  {(data.reduce((sum, item) => sum + parseFloat(item.humid), 0) / data.length).toFixed(1)}%
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          ) : (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
             
             <p className="text-base font-medium">Chưa có dữ liệu cho ngày này</p>

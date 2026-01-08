@@ -33,15 +33,12 @@ public class MqttConfig {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
 
-        // Sử dụng ssl:// và thông tin Cluster URL chính xác của bạn
         options.setServerURIs(new String[]{"ssl://5bef7f52fc5048cd80d158e2189eb0e8.s1.eu.hivemq.cloud:8883"});
 
-        // Khớp với Credentials trong ảnh bạn đã gửi
         options.setUserName("backend-java");
         options.setPassword("Backend123".toCharArray());
 
-        // Quan trọng: Phải có SocketFactory để xác thực SSL
-        options.setSocketFactory(SSLSocketFactory.getDefault());
+         options.setSocketFactory(SSLSocketFactory.getDefault());
 
         options.setCleanSession(true);
         options.setAutomaticReconnect(true);
@@ -58,10 +55,8 @@ public class MqttConfig {
         return new DirectChannel();
     }
 
-    // Adapter lắng nghe topic "garden/data" và "garden/state"
     @Bean
     public MessageProducer inbound() {
-        // ID duy nhất kèm timestamp để tránh xung đột kết nối
         String clientId = "backend-listener-" + System.currentTimeMillis();
 
         MqttPahoMessageDrivenChannelAdapter adapter =
@@ -85,7 +80,6 @@ public class MqttConfig {
             String topic = (String) message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC);
             String payload = (String) message.getPayload();
 
-            // Chuyển sang Service xử lý logic
             gardenMqttService.handleIncomingMessage(topic, payload);
         };
     }
@@ -108,7 +102,6 @@ public class MqttConfig {
         return messageHandler;
     }
 
-    // Interface để Controller gọi gửi lệnh
     @MessagingGateway(defaultRequestChannel = "mqttOutboundChannel")
     public interface MqttGateway {
         void sendToMqtt(String data, @Header(MqttHeaders.TOPIC) String topic);

@@ -13,9 +13,9 @@ public class Device {
     @Id
     private String deviceId;
 
-    private String state;    // "ON" hoặc "OFF"
+    private String state;
 
-    private String lastUpdated; // Thời gian cập nhật
+    private String lastUpdated;
 
 
     public Device() {

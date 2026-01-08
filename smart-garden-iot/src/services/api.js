@@ -1,10 +1,8 @@
-// src/services/api.js
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 const GATEWAY_ID = 'esp32-01';
 
-// 1. Tạo instance axios
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -12,12 +10,11 @@ const apiClient = axios.create({
   },
 });
 
-// 2. THÊM ĐOẠN NÀY: Interceptor để tự động gắn Token vào mọi request
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // Lấy token từ bộ nhớ
+    const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // Gắn vào Header theo chuẩn Bearer
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -26,7 +23,6 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 3. Các hàm gọi API (Giữ nguyên logic cũ của bạn)
 export const sensorAPI = {
   getLatest: async () => {
     const response = await apiClient.get('/sensors/latest');
@@ -34,9 +30,11 @@ export const sensorAPI = {
   },
 
   getHistory: async (startTime, endTime) => {
-    const response = await apiClient.get('/sensors/history', {
-      params: { from: startTime, to: endTime }
+    const response = await apiClient.post(`/sensors/history`, {
+        from: startTime,
+        to: endTime,
     });
+
     return response.data;
   }
 };

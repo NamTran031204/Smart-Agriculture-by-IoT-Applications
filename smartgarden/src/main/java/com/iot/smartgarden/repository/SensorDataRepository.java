@@ -9,6 +9,5 @@ import java.util.List;
 @Repository
 public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 
-    // Tìm dữ liệu trong khoảng thời gian (dùng cho vẽ biểu đồ)
     List<SensorData> findByTimestampBetween(Long from, Long to);
 }

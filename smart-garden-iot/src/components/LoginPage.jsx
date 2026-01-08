@@ -1,13 +1,11 @@
-// src/components/LoginPage.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Sprout, User, Lock, Mail, ArrowRight } from 'lucide-react';
 
 const LoginPage = () => {
-  const [isLogin, setIsLogin] = useState(true); // Toggle Login/Register
+  const [isLogin, setIsLogin] = useState(true);
   const { login, register } = useAuth();
   
-  // Form State
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -20,21 +18,15 @@ const LoginPage = () => {
     setSuccessMsg('');
 
     if (isLogin) {
-      // Xử lý Đăng nhập
-      // 2. THÊM AWAIT Ở ĐÂY
       const result = await login(username, password); 
       if (!result.success) {
         setError(result.message);
       }
     } else {
-      // Xử lý Đăng ký
-      // 3. THÊM AWAIT Ở ĐÂY
       const result = await register(username, password, fullName);
       
-      // Bây giờ result mới có giá trị thực, if (true) mới chạy được
       if (result.success) {
         setSuccessMsg(result.message);
-        // Tự động chuyển về tab đăng nhập sau 1.5s
         setTimeout(() => setIsLogin(true), 1500);
       } else {
         setError(result.message);
@@ -77,7 +69,6 @@ const LoginPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name (Chỉ hiện khi Đăng ký) */}
             {!isLogin && (
               <div className="relative">
                 <Mail className="absolute left-3 top-3 text-gray-400 w-5 h-5" />

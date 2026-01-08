@@ -1,4 +1,3 @@
-// Mock data for demo when API is not available
 export const MOCK_PLANTS = [
   {
     id: 1,
@@ -106,19 +105,14 @@ export const DEFAULT_THRESHOLDS = {
 
 export const DAYS_OF_WEEK = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
-export const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+export const AUTO_REFRESH_INTERVAL = 5000;
 
-// ========== LocalStorage Keys ==========
-// Backend không có API cho settings và plants, nên lưu vào localStorage
 export const STORAGE_KEYS = {
   THRESHOLDS: 'garden_thresholds',
   PLANTS: 'garden_plants',
   AUTO_REFRESH: 'garden_auto_refresh'
 };
 
-// ========== LocalStorage Helpers ==========
-
-// Lấy thresholds từ localStorage
 export const getStoredThresholds = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.THRESHOLDS);
@@ -129,7 +123,6 @@ export const getStoredThresholds = () => {
   }
 };
 
-// Lưu thresholds vào localStorage
 export const saveThresholds = (thresholds) => {
   try {
     localStorage.setItem(STORAGE_KEYS.THRESHOLDS, JSON.stringify(thresholds));
@@ -140,7 +133,6 @@ export const saveThresholds = (thresholds) => {
   }
 };
 
-// Lấy plants từ localStorage
 export const getStoredPlants = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.PLANTS);
@@ -151,7 +143,6 @@ export const getStoredPlants = () => {
   }
 };
 
-// Lưu plants vào localStorage
 export const savePlants = (plants) => {
   try {
     localStorage.setItem(STORAGE_KEYS.PLANTS, JSON.stringify(plants));
@@ -162,7 +153,6 @@ export const savePlants = (plants) => {
   }
 };
 
-// Lấy auto refresh setting
 export const getAutoRefreshSetting = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.AUTO_REFRESH);
@@ -173,7 +163,6 @@ export const getAutoRefreshSetting = () => {
   }
 };
 
-// Lưu auto refresh setting
 export const saveAutoRefreshSetting = (enabled) => {
   try {
     localStorage.setItem(STORAGE_KEYS.AUTO_REFRESH, enabled.toString());

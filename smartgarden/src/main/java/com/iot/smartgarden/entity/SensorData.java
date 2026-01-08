@@ -10,11 +10,11 @@ public class SensorData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Double temp;     // Nhiệt độ
-    private Double humid;    // Độ ẩm
-    private Integer moisture;// Độ ẩm đất
-    private Integer optical; // Ánh sáng
-    private Long timestamp;  // Thời gian
+    private Double temp;
+    private Double humid;
+    private Integer moisture;
+    private Integer optical;
+    private Long timestamp;
 
     public SensorData() {
     }

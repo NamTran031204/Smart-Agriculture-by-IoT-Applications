@@ -6,12 +6,14 @@ import com.iot.smartgarden.repository.DeviceRepository;
 import com.iot.smartgarden.repository.SensorDataRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
+@Slf4j
 public class GardenMqttService {
 
     @Autowired
@@ -23,19 +25,18 @@ public class GardenMqttService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void handleIncomingMessage(String topic, String payload) {
+
+        log.info("Đã nhận topic {} - {}", topic, payload);
+
         try {
             JsonNode json = objectMapper.readTree(payload);
 
-            // 1. Xử lý Dữ liệu Cảm biến (Topic: garden/data/esp32-01/sensors)
             if (topic.contains("/sensors")) {
                 SensorData data = new SensorData();
-                // Khớp với key trong ESP32: doc["temp"], doc["humid"], doc["moisture"], doc["optical"]
                 if (json.has("temp")) data.setTemp(json.get("temp").asDouble());
                 if (json.has("humid")) data.setHumid(json.get("humid").asDouble());
                 if (json.has("moisture")) data.setMoisture(json.get("moisture").asInt());
                 if (json.has("optical")) data.setOptical(json.get("optical").asInt());
-
-                // ESP32 gửi timestamp dạng ISO 8601 (2024-05-20T10:00:00Z)
 
                 data.setTimestamp(System.currentTimeMillis() / 1000);
 
@@ -43,11 +44,10 @@ public class GardenMqttService {
                 System.out.println(" Saved sensor data from topic: " + topic);
             }
 
-            // 2. Xử lý Trạng thái Thiết bị (Topic: garden/state/esp32-01/pump)
             else if (topic.contains("garden/state/")) {
 
                 String[] parts = topic.split("/");
-                String deviceName = parts[parts.length - 1]; // pump, fan, light...
+                String deviceName = parts[parts.length - 1];
 
 
                 String state = payload.trim();
@@ -61,10 +61,8 @@ public class GardenMqttService {
                 System.out.println(" Updated " + deviceName + " state to: " + state);
             }
 
-            // 3. Xử lý Cảnh báo (Topic: garden/alert/esp32-01)
             else if (topic.contains("garden/alert/")) {
                 System.out.println(" ALERT RECEIVED: " + payload);
-                // Bạn có thể tạo thêm AlertEntity để lưu vào DB ở đây
             }
 
         } catch (Exception e) {

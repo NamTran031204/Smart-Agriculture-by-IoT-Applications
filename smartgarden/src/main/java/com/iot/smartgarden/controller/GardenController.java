@@ -1,6 +1,7 @@
 package com.iot.smartgarden.controller;
 
 import com.iot.smartgarden.config.MqttConfig;
+import com.iot.smartgarden.dto.History;
 import com.iot.smartgarden.entity.Device;
 import com.iot.smartgarden.entity.SensorData;
 import com.iot.smartgarden.repository.DeviceRepository;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")   
@@ -33,9 +35,9 @@ public class GardenController {
                 .stream().findFirst().orElse(null);
     }
 
-    @GetMapping("/sensors/history")
-    public List<SensorData> getHistory(@RequestParam Long from, @RequestParam Long to) {
-        return sensorRepository.findByTimestampBetween(from, to);
+    @PostMapping("/sensors/history")
+    public List<SensorData> getHistory(@RequestBody History input) {
+        return sensorRepository.findByTimestampBetween(input.getFrom(), input.getTo());
     }
 
     // XEM TRẠNG THÁI THIẾT BỊ
@@ -47,20 +49,24 @@ public class GardenController {
 
     // Gửi lệnh MQTT
 
-    // API chung cho tất cả thiết bị: /api/control/pump, /api/control/fan...
     @PostMapping("/control/{deviceId}/{component}")
     public String controlDevice(
             @PathVariable String deviceId,
             @PathVariable String component,
             @RequestBody Map<String, String> body) {
 
-        String state = body.get("state"); // "ON" hoặc "OFF"
-
-        //  TOPIC_CMD_WILDCARD trong ESP32: garden/command/esp32-01/#
+        String state = body.get("state");
         String topic = "garden/command/" + deviceId + "/" + component;
 
-        // Gửi payload thô "ON" hoặc "OFF" để ESP32 strstr()
         mqttGateway.sendToMqtt(state, topic);
+
+        Device deviceOptional = deviceRepository.findById(deviceId)
+                .orElse(null);
+
+        if (deviceOptional != null) {
+            deviceOptional.setState(state);
+            deviceRepository.save(deviceOptional);
+        }
 
         return "Sent " + state + " to " + component + " on device " + deviceId;
     }

@@ -32,23 +32,23 @@ services:
              /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf"
 
   # 3. BACKEND
-  backend:
-    build: .  # Dấu chấm nghĩa là tìm Dockerfile ở thư mục hiện tại
-    container_name: smart_garden_backend
-    restart: always
-    ports:
-      - "8080:8080" # Map port API ra ngoài
-    depends_on:
-      - postgres-db # Đợi DB chạy xong mới chạy backend
-      - mosquitto
-    environment:
-      # GHI ĐÈ cấu hình trong application.properties
-      # Thay 'localhost' bằng tên service 'postgres-db' và 'mosquitto'
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/smart_garden_db
-      SPRING_DATASOURCE_USERNAME: garden_user
-      SPRING_DATASOURCE_PASSWORD: garden_password
-      # Cấu hình MQTT Broker URL (Nếu bạn không dùng biến môi trường trong code thì phải sửa file properties)
-      # Nhưng tốt nhất nên dùng biến môi trường SPRING_... để linh hoạt
+#  backend:
+#    build: .  # Dấu chấm nghĩa là tìm Dockerfile ở thư mục hiện tại
+#    container_name: smart_garden_backend
+#    restart: always
+#    ports:
+#      - "8080:8080" # Map port API ra ngoài
+#    depends_on:
+#      - postgres-db # Đợi DB chạy xong mới chạy backend
+#      - mosquitto
+#    environment:
+#      # GHI ĐÈ cấu hình trong application.properties
+#      # Thay 'localhost' bằng tên service 'postgres-db' và 'mosquitto'
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/smart_garden_db
+#      SPRING_DATASOURCE_USERNAME: garden_user
+#      SPRING_DATASOURCE_PASSWORD: garden_password
+#      # Cấu hình MQTT Broker URL (Nếu bạn không dùng biến môi trường trong code thì phải sửa file properties)
+#      # Nhưng tốt nhất nên dùng biến môi trường SPRING_... để linh hoạt
 
 volumes:
   postgres_data:

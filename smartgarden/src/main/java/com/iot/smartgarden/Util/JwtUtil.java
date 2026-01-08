@@ -12,9 +12,9 @@ import java.util.Date;
 public class JwtUtil {
 
     private static final String SECRET =
-            "my-super-secret-key-my-super-secret-key"; // >= 32 chars
+            "my-super-secret-key-my-super-secret-key";
 
-    private static final long EXPIRATION = 1000 * 60 * 60; // 1h
+    private static final long EXPIRATION = 1000 * 60 * 60;
 
     private Key getKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));

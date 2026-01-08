@@ -31,7 +31,7 @@ const SensorDataCard = ({ sensorData }) => {
         <div className="text-center">
           <p className="text-xs text-gray-500">Ánh sáng</p>
           <p className="text-lg font-bold text-yellow-600">
-            {sensorData.optical || sensorData.light || '--'} lux
+            {sensorData.optical || sensorData.light || '--'} %
           </p>
         </div>
       </div>
